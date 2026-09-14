@@ -1,6 +1,8 @@
 package com.Aithani.BankingApp.Service.imp;
 
 import com.Aithani.BankingApp.Entity.Account;
+import com.Aithani.BankingApp.Entity.Loan;
+import com.Aithani.BankingApp.Entity.LoanStatus;
 import com.Aithani.BankingApp.Mapper.AccountMapper;
 import com.Aithani.BankingApp.Repository.AccountRepository;
 import com.Aithani.BankingApp.Service.AccountService;
@@ -11,14 +13,19 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import com.Aithani.BankingApp.Repository.LoanRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountServiceImp implements AccountService
 {
     private AccountRepository accountRepository;
+    private LoanRepository loanRepository;
 
-    public AccountServiceImp(AccountRepository accountRepository) {
+    public AccountServiceImp(AccountRepository accountRepository,
+                             LoanRepository loanRepository) {
         this.accountRepository = accountRepository;
+        this.loanRepository = loanRepository;
     }
 
     @Override
@@ -96,17 +103,41 @@ public class AccountServiceImp implements AccountService
     }
 
     @Override
+    @Transactional
     public AccountDto quickLoan(Long id, double amount) {
 
         if(amount<=0){
-            throw new RuntimeException("Loan Amount sould be greater than 0");
+            throw new RuntimeException("Loan Amount should be greater than 0");
         }
-        AccountDto accountDto = getAccountById(id);
-        double balance = accountDto.getBalance();
+        boolean activeLoanExists =
+                loanRepository.existsByAccountIdAndStatus(
+                        id,
+                        LoanStatus.ACTIVE
+                );
+        if (activeLoanExists) {
+            throw new RuntimeException("Active loan already exists");
+        }
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account doesn't Exist"));
+
+        double balance = account.getBalance();
 
         if (balance < amount * (2.0 / 3.0)) {
             throw new RuntimeException("Insufficient Amount");
         }
+        Loan loan = new Loan();
+        loan.setAmount(amount);
+        loan.setStatus(LoanStatus.ACTIVE);
+        loan.setAccount(account);
+
+        System.out.println("Amount: " + loan.getAmount());
+        System.out.println("Status: " + loan.getStatus());
+        System.out.println("Account ID: " + loan.getAccount().getId());
+
+        loanRepository.save(loan);
+
+        account.setBalance(balance + amount);
+        Account savedAccount = accountRepository.save(account);
 
         return deposit(id,amount);
     }
