@@ -109,18 +109,20 @@ public class AccountServiceImp implements AccountService
         if(amount<=0){
             throw new RuntimeException("Loan Amount should be greater than 0");
         }
-        boolean activeLoanExists =
-                loanRepository.existsByAccountIdAndStatus(
-                        id,
-                        LoanStatus.ACTIVE
-                );
-        if (activeLoanExists) {
-            throw new RuntimeException("Active loan already exists");
-        }
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account doesn't Exist"));
+boolean activeLoanExists =
+        loanRepository.existsByAccountIdAndStatus(
+                id,
+                LoanStatus.ACTIVE
+        );
 
-        double balance = account.getBalance();
+if (activeLoanExists) {
+    throw new RuntimeException("Active loan already exists");
+}
+
+Account account = accountRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("Account doesn't Exist"));
+
+double balance = account.getBalance();
 
         if (balance < amount * (2.0 / 3.0)) {
             throw new RuntimeException("Insufficient Amount");
