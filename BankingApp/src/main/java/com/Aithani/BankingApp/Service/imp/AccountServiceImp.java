@@ -141,7 +141,35 @@ double balance = account.getBalance();
         account.setBalance(balance + amount);
         Account savedAccount = accountRepository.save(account);
 
-        return deposit(id,amount);
+        return AccountMapper.mapToAccountDto(savedAccount);
+    }
+    @Override
+    @Transactional
+    public AccountDto repayLoan(Long id) {
+
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Account doesn't Exist"));
+
+        Loan loan = loanRepository
+                .findByAccountIdAndStatus(id, LoanStatus.ACTIVE)
+                .orElseThrow(() ->
+                        new RuntimeException("No active loan found"));
+
+        double loanAmount = loan.getAmount();
+
+        if (account.getBalance() < loanAmount) {
+            throw new RuntimeException("Insufficient balance to repay loan");
+        }
+
+        account.setBalance(account.getBalance() - loanAmount);
+
+        loan.setStatus(LoanStatus.CLOSED);
+
+        accountRepository.save(account);
+        loanRepository.save(loan);
+
+        return AccountMapper.mapToAccountDto(account);
     }
 
 }

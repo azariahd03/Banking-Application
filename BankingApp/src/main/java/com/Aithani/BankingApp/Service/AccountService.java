@@ -21,4 +21,6 @@ public interface AccountService
     AccountDto transfer(Long idTarget,Long idSource, double amount);
 
     AccountDto quickLoan(Long id, double amount);
+
+    AccountDto repayLoan(Long id);
 }

@@ -83,4 +83,14 @@ public class AccountController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Handle the exception as needed
         }
     }
+    // Repay Active Loan REST API
+    @PutMapping("/{id}/loan/repay")
+    public ResponseEntity<AccountDto> repayLoan(@PathVariable Long id) {
+        try {
+            AccountDto updatedAccount = accountService.repayLoan(id);
+            return ResponseEntity.ok(updatedAccount);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
 }
