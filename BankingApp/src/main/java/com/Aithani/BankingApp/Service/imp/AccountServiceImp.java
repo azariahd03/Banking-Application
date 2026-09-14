@@ -97,6 +97,10 @@ public class AccountServiceImp implements AccountService
 
     @Override
     public AccountDto quickLoan(Long id, double amount) {
+
+        if(amount<=0){
+            throw new RuntimeException("Loan Amount should be greater than 0");
+        }
         AccountDto accountDto = getAccountById(id);
         double balance = accountDto.getBalance();
 
@@ -104,8 +108,7 @@ public class AccountServiceImp implements AccountService
             throw new RuntimeException("Insufficient Amount");
         }
 
-        AccountDto updatedAccount = deposit(id, amount);
-        return updatedAccount;
+        return deposit(id,amount);
     }
 
 }
