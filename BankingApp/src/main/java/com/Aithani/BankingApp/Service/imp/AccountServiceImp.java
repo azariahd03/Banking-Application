@@ -4,6 +4,10 @@ import com.Aithani.BankingApp.Entity.Account;
 import com.Aithani.BankingApp.Entity.Loan;
 import com.Aithani.BankingApp.Entity.LoanStatus;
 import com.Aithani.BankingApp.Exception.AccountNotFoundException;
+import com.Aithani.BankingApp.Exception.ActiveLoanExistsException;
+import com.Aithani.BankingApp.Exception.InvalidLoanAmountException;
+import com.Aithani.BankingApp.Exception.InsufficientBalanceException;
+import com.Aithani.BankingApp.Exception.NoActiveLoanException;
 import com.Aithani.BankingApp.Mapper.AccountMapper;
 import com.Aithani.BankingApp.Repository.AccountRepository;
 import com.Aithani.BankingApp.Service.AccountService;
@@ -109,7 +113,7 @@ public class AccountServiceImp implements AccountService
     public AccountDto quickLoan(Long id, double amount) {
 
         if(amount<=0){
-            throw new RuntimeException("Loan Amount should be greater than 0");
+            throw new InvalidLoanAmountException("Loan Amount should be greater than 0");
         }
 boolean activeLoanExists =
         loanRepository.existsByAccountIdAndStatus(
@@ -118,7 +122,7 @@ boolean activeLoanExists =
         );
 
 if (activeLoanExists) {
-    throw new RuntimeException("Active loan already exists");
+    throw new ActiveLoanExistsException("Active loan already exists");
 }
 
 Account account = accountRepository.findById(id)
@@ -127,7 +131,7 @@ Account account = accountRepository.findById(id)
 double balance = account.getBalance();
 
         if (balance < amount * (2.0 / 3.0)) {
-            throw new RuntimeException("Insufficient Amount");
+            throw new InsufficientBalanceException("Insufficient Amount");
         }
         Loan loan = new Loan();
         loan.setAmount(amount);
@@ -155,7 +159,7 @@ double balance = account.getBalance();
         Loan loan = loanRepository
                 .findByAccountIdAndStatus(id, LoanStatus.ACTIVE)
                 .orElseThrow(() ->
-                        new RuntimeException("No active loan found"));
+                        new NoActiveLoanException("No active loan found"));
 
         double loanAmount = loan.getAmount();
 
