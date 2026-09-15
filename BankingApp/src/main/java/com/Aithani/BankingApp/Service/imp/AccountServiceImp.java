@@ -3,6 +3,7 @@ package com.Aithani.BankingApp.Service.imp;
 import com.Aithani.BankingApp.Entity.Account;
 import com.Aithani.BankingApp.Entity.Loan;
 import com.Aithani.BankingApp.Entity.LoanStatus;
+import com.Aithani.BankingApp.Exception.AccountNotFoundException;
 import com.Aithani.BankingApp.Mapper.AccountMapper;
 import com.Aithani.BankingApp.Repository.AccountRepository;
 import com.Aithani.BankingApp.Service.AccountService;
@@ -38,7 +39,7 @@ public class AccountServiceImp implements AccountService
     @Override
     public AccountDto getAccountById(long id)
     {
-        Account account = accountRepository.findById(id).orElseThrow(()->new RuntimeException("Account doesn't Exist"));
+        Account account = accountRepository.findById(id).orElseThrow(()->new AccountNotFoundException("Account doesn't Exist"));
 
         return AccountMapper.mapToAccountDto(account);
     }
@@ -48,7 +49,8 @@ public class AccountServiceImp implements AccountService
     {
         Account account = accountRepository
                 .findById(id)
-                .orElseThrow(()->new RuntimeException("Account doesn't Exist"));
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account doesn't exist"));
 
         double total = account.getBalance()+amount;
         account.setBalance(total);
@@ -61,8 +63,8 @@ public class AccountServiceImp implements AccountService
     {
         Account account = accountRepository
                 .findById(id)
-                .orElseThrow(()->new RuntimeException("Account doesn't Exist"));
-
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account doesn't exist"));
         if(account.getBalance()<amount)
         {
             throw new RuntimeException("Insufficient Amount");
@@ -85,8 +87,8 @@ public class AccountServiceImp implements AccountService
     public void deleteAccount(long id) {
         Account account = accountRepository
                 .findById(id)
-                .orElseThrow(()->new RuntimeException("Account doesn't Exist"));
-
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account doesn't exist"));
         accountRepository.deleteById(id);
     }
 
@@ -120,8 +122,8 @@ if (activeLoanExists) {
 }
 
 Account account = accountRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Account doesn't Exist"));
-
+        .orElseThrow(() ->
+                new AccountNotFoundException("Account doesn't exist"));
 double balance = account.getBalance();
 
         if (balance < amount * (2.0 / 3.0)) {
@@ -149,8 +151,7 @@ double balance = account.getBalance();
 
         Account account = accountRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Account doesn't Exist"));
-
+                                new AccountNotFoundException("Account doesn't exist"));
         Loan loan = loanRepository
                 .findByAccountIdAndStatus(id, LoanStatus.ACTIVE)
                 .orElseThrow(() ->
