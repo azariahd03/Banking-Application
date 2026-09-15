@@ -2,6 +2,7 @@ package com.Aithani.BankingApp.Controller;
 
 import com.Aithani.BankingApp.Service.AccountService;
 import dto.AccountDto;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class AccountController
 
     //Add Account Rest API
     @PostMapping
-    public ResponseEntity<AccountDto> addAccount(@RequestBody AccountDto accountDto)
+    public ResponseEntity<AccountDto> addAccount(@Valid @RequestBody AccountDto accountDto)
     {
         return new ResponseEntity<>(accountService.createAccount(accountDto), HttpStatus.CREATED);
     }
