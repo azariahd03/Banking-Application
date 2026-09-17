@@ -138,10 +138,6 @@ double balance = account.getBalance();
         loan.setStatus(LoanStatus.ACTIVE);
         loan.setAccount(account);
 
-        System.out.println("Amount: " + loan.getAmount());
-        System.out.println("Status: " + loan.getStatus());
-        System.out.println("Account ID: " + loan.getAccount().getId());
-
         loanRepository.save(loan);
 
         account.setBalance(balance + amount);
@@ -164,7 +160,7 @@ double balance = account.getBalance();
         double loanAmount = loan.getAmount();
 
         if (account.getBalance() < loanAmount) {
-            throw new RuntimeException("Insufficient balance to repay loan");
+            throw new InsufficientBalanceException("Insufficient balance to repay loan");
         }
 
         account.setBalance(account.getBalance() - loanAmount);
