@@ -1,5 +1,8 @@
 package com.Aithani.BankingApp.Controller;
 
+import com.Aithani.BankingApp.Exception.AccountNotFoundException;
+import com.Aithani.BankingApp.Exception.GlobalExceptionHandler;
+import com.Aithani.BankingApp.Exception.InvalidLoanAmountException;
 import com.Aithani.BankingApp.Service.AccountService;
 import dto.AccountDto;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,12 +29,16 @@ public class AccountControllerTest {
     private MockMvc mockMvc;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         MockitoAnnotations.openMocks(this);
 
-        AccountController accountController = new AccountController(accountService);
+        AccountController accountController =
+                new AccountController(accountService);
 
-        mockMvc = MockMvcBuilders.standaloneSetup(accountController).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(accountController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -96,5 +103,29 @@ public class AccountControllerTest {
                             }
                             """))
                 .andExpect(status().isBadRequest());
+    }
+    @Test
+    void getAccount_shouldReturnNotFound_whenAccountDoesNotExist() throws Exception {
+
+        when(accountService.getAccountById(999L))
+                .thenThrow(new AccountNotFoundException("Account doesn't exist"));
+
+        mockMvc.perform(get("/api/accounts/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Account doesn't exist"));
+    }
+    @Test
+    void quickLoan_shouldReturnBadRequest_whenLoanAmountIsInvalid() throws Exception {
+
+        when(accountService.quickLoan(1L, 0))
+                .thenThrow(new InvalidLoanAmountException("Loan amount must be greater than zero"));
+
+        mockMvc.perform(post("/api/accounts/1/quick-loan")
+                        .param("amount", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message")
+                        .value("Loan amount must be greater than zero"));
     }
 }
