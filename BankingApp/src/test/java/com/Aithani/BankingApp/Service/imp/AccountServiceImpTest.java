@@ -1,21 +1,23 @@
 package com.Aithani.BankingApp.Service.imp;
 
-import com.Aithani.BankingApp.Entity.Account;
-import com.Aithani.BankingApp.Entity.Loan;
-import com.Aithani.BankingApp.Entity.LoanStatus;
+import com.Aithani.BankingApp.Entity.*;
 import com.Aithani.BankingApp.Exception.ActiveLoanExistsException;
 import com.Aithani.BankingApp.Exception.InsufficientBalanceException;
 import com.Aithani.BankingApp.Exception.InvalidLoanAmountException;
 import com.Aithani.BankingApp.Exception.NoActiveLoanException;
 import com.Aithani.BankingApp.Repository.AccountRepository;
 import com.Aithani.BankingApp.Repository.LoanRepository;
+import com.Aithani.BankingApp.Repository.TransactionRepository;
 import dto.AccountDto;
+import dto.TransactionDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,6 +32,8 @@ public class AccountServiceImpTest {
     private AccountRepository accountRepository;
     @Mock
     private LoanRepository loanRepository;
+    @Mock
+    private TransactionRepository transactionRepository;
 
     private AccountServiceImp accountService;
 
@@ -37,7 +41,7 @@ public class AccountServiceImpTest {
     void setup(){
         MockitoAnnotations.openMocks(this);
 
-        accountService = new AccountServiceImp(accountRepository,loanRepository);
+        accountService = new AccountServiceImp(accountRepository,loanRepository,transactionRepository);
     }
     @Test
     void quickLoan_shouldApproveLoan_whenRequestIsValid() {
@@ -64,6 +68,7 @@ public class AccountServiceImpTest {
 
         verify(loanRepository).save(any(Loan.class));
         verify(accountRepository).save(account);
+        verify(transactionRepository).save(any(Transaction.class));
     }
     @Test
     void quickLoan_shouldThrowException_whenAmountIsInvalid() {
@@ -163,5 +168,79 @@ public class AccountServiceImpTest {
                 InsufficientBalanceException.class,
                 () -> accountService.repayLoan(1L)
         );
+    }
+    @Test
+    void deposit_shouldSaveTransaction_whenDepositIsSuccessful() {
+
+        Account account = new Account();
+        account.setId(1L);
+        account.setAccountHolderName("Test User");
+        account.setBalance(5000);
+
+        when(accountRepository.findById(1L))
+                .thenReturn(Optional.of(account));
+
+        when(accountRepository.save(any(Account.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AccountDto result = accountService.deposit(1L, 1000);
+
+        assertEquals(6000, result.getBalance());
+
+        verify(transactionRepository)
+                .save(any(Transaction.class));
+    }
+    @Test
+    void withdraw_shouldSaveTransaction_whenWithdrawalIsSuccessful() {
+
+        Account account = new Account();
+        account.setId(1L);
+        account.setAccountHolderName("Test User");
+        account.setBalance(5000);
+
+        when(accountRepository.findById(1L))
+                .thenReturn(Optional.of(account));
+
+        when(accountRepository.save(any(Account.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AccountDto result = accountService.withdraw(1L, 1000);
+
+        assertEquals(4000, result.getBalance());
+
+        verify(transactionRepository)
+                .save(any(Transaction.class));
+    }
+    @Test
+    void getTransactionHistory_shouldReturnTransactions_whenAccountExists() {
+
+        Account account = new Account();
+        account.setId(1L);
+        account.setAccountHolderName("Test User");
+        account.setBalance(5000);
+
+        Transaction transaction = new Transaction();
+        transaction.setId(1L);
+        transaction.setAmount(1000);
+        transaction.setType(TransactionType.DEPOSIT);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(account);
+
+        when(accountRepository.findById(1L))
+                .thenReturn(Optional.of(account));
+
+        when(transactionRepository
+                .findByAccountIdOrderByTransactionTimeDesc(1L))
+                .thenReturn(List.of(transaction));
+
+        List<TransactionDto> result =
+                accountService.getTransactionHistory(1L);
+
+        assertEquals(1, result.size());
+        assertEquals(1000, result.get(0).getAmount());
+        assertEquals(TransactionType.DEPOSIT, result.get(0).getType());
+
+        verify(transactionRepository)
+                .findByAccountIdOrderByTransactionTimeDesc(1L);
     }
 }
