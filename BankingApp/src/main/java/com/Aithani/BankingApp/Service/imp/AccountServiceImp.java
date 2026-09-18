@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 import dto.AccountDto;
 import dto.TransactionDto;
 import lombok.Setter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -243,25 +246,31 @@ double balance = account.getBalance();
     }
 
     @Override
-    public List<TransactionDto> getTransactionHistory(Long accountId) {
+    public Page<TransactionDto> getTransactionHistory(
+            Long accountId,
+            int page,
+            int size) {
 
-        // Check whether account exists
         accountRepository.findById(accountId)
                 .orElseThrow(() ->
                         new AccountNotFoundException("Account doesn't exist"));
 
-        // Get transactions newest first
-        List<Transaction> transactions =
-                transactionRepository.findByAccountIdOrderByTransactionTimeDesc(accountId);
+        Pageable pageable = PageRequest.of(page, size);
 
-        // Convert Transaction entity → TransactionDto
-        return transactions.stream()
-                .map(transaction -> new TransactionDto(
+        Page<Transaction> transactions =
+                transactionRepository
+                        .findByAccountIdOrderByTransactionTimeDesc(
+                                accountId,
+                                pageable
+                        );
+
+        return transactions.map(transaction ->
+                new TransactionDto(
                         transaction.getId(),
                         transaction.getAmount(),
                         transaction.getType(),
                         transaction.getTransactionTime()
-                ))
-                .collect(Collectors.toList());
+                )
+        );
     }
 }

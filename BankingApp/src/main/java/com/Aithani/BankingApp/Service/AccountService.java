@@ -2,6 +2,7 @@ package com.Aithani.BankingApp.Service;
 
 import dto.AccountDto;
 import dto.TransactionDto;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -25,5 +26,9 @@ public interface AccountService
 
     AccountDto repayLoan(Long id);
 
-    List<TransactionDto> getTransactionHistory(Long accountId);
+    Page<TransactionDto> getTransactionHistory(
+            Long accountId,
+            int page,
+            int size
+    );
 }
