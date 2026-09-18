@@ -1,6 +1,7 @@
 package com.Aithani.BankingApp.Service;
 
 import dto.AccountDto;
+import dto.TransactionDto;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public interface AccountService
     AccountDto quickLoan(Long id, double amount);
 
     AccountDto repayLoan(Long id);
+
+    List<TransactionDto> getTransactionHistory(Long accountId);
 }

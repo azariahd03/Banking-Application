@@ -10,8 +10,14 @@ import com.Aithani.BankingApp.Exception.InsufficientBalanceException;
 import com.Aithani.BankingApp.Exception.NoActiveLoanException;
 import com.Aithani.BankingApp.Mapper.AccountMapper;
 import com.Aithani.BankingApp.Repository.AccountRepository;
+import com.Aithani.BankingApp.Repository.TransactionRepository;
 import com.Aithani.BankingApp.Service.AccountService;
+import com.Aithani.BankingApp.Entity.Transaction;
+import com.Aithani.BankingApp.Entity.TransactionType;
+
+import java.time.LocalDateTime;
 import dto.AccountDto;
+import dto.TransactionDto;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +32,14 @@ public class AccountServiceImp implements AccountService
 {
     private AccountRepository accountRepository;
     private LoanRepository loanRepository;
+    private TransactionRepository transactionRepository;
 
     public AccountServiceImp(AccountRepository accountRepository,
-                             LoanRepository loanRepository) {
+                             LoanRepository loanRepository,
+                             TransactionRepository transactionRepository) {
         this.accountRepository = accountRepository;
         this.loanRepository = loanRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     @Override
@@ -59,6 +68,14 @@ public class AccountServiceImp implements AccountService
         double total = account.getBalance()+amount;
         account.setBalance(total);
         Account savedAccount = accountRepository.save((account));
+        Transaction transaction = new Transaction();
+
+        transaction.setAmount(amount);
+        transaction.setType(TransactionType.DEPOSIT);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(savedAccount);
+
+        transactionRepository.save(transaction);
         return AccountMapper.mapToAccountDto(savedAccount);
     }
 
@@ -76,6 +93,15 @@ public class AccountServiceImp implements AccountService
         double total = account.getBalance()-amount;
         account.setBalance(total);
         Account savedAccount = accountRepository.save(account);
+
+        Transaction transaction = new Transaction();
+
+        transaction.setAmount(amount);
+        transaction.setType(TransactionType.WITHDRAW);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(savedAccount);
+
+        transactionRepository.save(transaction);
 
         return AccountMapper.mapToAccountDto(savedAccount);
     }
@@ -98,14 +124,43 @@ public class AccountServiceImp implements AccountService
 
     @Override
     public AccountDto transfer(Long idTarget, Long idSource, double amount) {
-        AccountDto sourceAccountDto = getAccountById(idSource);
-        double sourceBalance = sourceAccountDto.getBalance();
-        if (sourceBalance < amount) {
-            throw new RuntimeException("Insufficient funds in the source account");
+
+        // Get source account
+        Account sourceAccount = accountRepository.findById(idSource)
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Source account doesn't exist"));
+
+        // Get target account
+        Account targetAccount = accountRepository.findById(idTarget)
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Target account doesn't exist"));
+
+        if (sourceAccount.getBalance() < amount) {
+            throw new InsufficientBalanceException("Insufficient funds in the source account");
         }
-        AccountDto sourceUpdatedAccount = withdraw(idSource, amount);
-        AccountDto targetUpdatedAccount = deposit(idTarget, amount);
-        return targetUpdatedAccount;
+        // Save both accounts
+        Account savedSourceAccount =
+                accountRepository.save(sourceAccount);
+
+        Account savedTargetAccount =
+                accountRepository.save(targetAccount);
+
+        Transaction sourceTransaction = new Transaction();
+        sourceTransaction.setAmount(amount);
+        sourceTransaction.setType(TransactionType.TRANSFER);
+        sourceTransaction.setTransactionTime(LocalDateTime.now());
+        sourceTransaction.setAccount(sourceAccount);
+
+        transactionRepository.save(sourceTransaction);
+
+        Transaction targetTransaction = new Transaction();
+        targetTransaction.setAmount(amount);
+        targetTransaction.setType(TransactionType.TRANSFER);
+        targetTransaction.setTransactionTime(LocalDateTime.now());
+        targetTransaction.setAccount(targetAccount);
+
+        transactionRepository.save(targetTransaction);
+        return AccountMapper.mapToAccountDto(savedTargetAccount);
     }
 
     @Override
@@ -142,6 +197,13 @@ double balance = account.getBalance();
 
         account.setBalance(balance + amount);
         Account savedAccount = accountRepository.save(account);
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setType(TransactionType.LOAN_CREDIT);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(savedAccount);
+
+        transactionRepository.save(transaction);
 
         return AccountMapper.mapToAccountDto(savedAccount);
     }
@@ -169,8 +231,37 @@ double balance = account.getBalance();
 
         accountRepository.save(account);
         loanRepository.save(loan);
+        Transaction transaction = new Transaction();
+        transaction.setAmount(loanAmount);
+        transaction.setType(TransactionType.LOAN_REPAYMENT);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(account);
+
+        transactionRepository.save(transaction);
 
         return AccountMapper.mapToAccountDto(account);
     }
 
+    @Override
+    public List<TransactionDto> getTransactionHistory(Long accountId) {
+
+        // Check whether account exists
+        accountRepository.findById(accountId)
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account doesn't exist"));
+
+        // Get transactions newest first
+        List<Transaction> transactions =
+                transactionRepository.findByAccountIdOrderByTransactionTimeDesc(accountId);
+
+        // Convert Transaction entity → TransactionDto
+        return transactions.stream()
+                .map(transaction -> new TransactionDto(
+                        transaction.getId(),
+                        transaction.getAmount(),
+                        transaction.getType(),
+                        transaction.getTransactionTime()
+                ))
+                .collect(Collectors.toList());
+    }
 }

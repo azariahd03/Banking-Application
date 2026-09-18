@@ -2,6 +2,7 @@ package com.Aithani.BankingApp.Controller;
 
 import com.Aithani.BankingApp.Service.AccountService;
 import dto.AccountDto;
+import dto.TransactionDto;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -89,6 +90,15 @@ public class AccountController
 
         AccountDto updatedAccount = accountService.repayLoan(id);
         return ResponseEntity.ok(updatedAccount);
+    }
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<TransactionDto>> getTransactionHistory(
+            @PathVariable Long id) {
+
+        List<TransactionDto> transactions =
+                accountService.getTransactionHistory(id);
+
+        return ResponseEntity.ok(transactions);
     }
 
 }
