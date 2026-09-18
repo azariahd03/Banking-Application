@@ -4,6 +4,7 @@ import com.Aithani.BankingApp.Service.AccountService;
 import dto.AccountDto;
 import dto.TransactionDto;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -92,11 +93,13 @@ public class AccountController
         return ResponseEntity.ok(updatedAccount);
     }
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionDto>> getTransactionHistory(
-            @PathVariable Long id) {
+    public ResponseEntity<Page<TransactionDto>> getTransactionHistory(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        List<TransactionDto> transactions =
-                accountService.getTransactionHistory(id);
+        Page<TransactionDto> transactions =
+                accountService.getTransactionHistory(id, page, size);
 
         return ResponseEntity.ok(transactions);
     }

@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -229,18 +233,35 @@ public class AccountServiceImpTest {
         when(accountRepository.findById(1L))
                 .thenReturn(Optional.of(account));
 
+        Page<Transaction> transactionPage =
+                new PageImpl<>(List.of(transaction));
+
         when(transactionRepository
-                .findByAccountIdOrderByTransactionTimeDesc(1L))
-                .thenReturn(List.of(transaction));
+                .findByAccountIdOrderByTransactionTimeDesc(
+                        eq(1L),
+                        any(Pageable.class)
+                ))
+                .thenReturn(transactionPage);
 
-        List<TransactionDto> result =
-                accountService.getTransactionHistory(1L);
+        Page<TransactionDto> result =
+                accountService.getTransactionHistory(1L, 0, 10);
 
-        assertEquals(1, result.size());
-        assertEquals(1000, result.get(0).getAmount());
-        assertEquals(TransactionType.DEPOSIT, result.get(0).getType());
+        assertEquals(1, result.getContent().size());
+
+        assertEquals(
+                1000,
+                result.getContent().get(0).getAmount()
+        );
+
+        assertEquals(
+                TransactionType.DEPOSIT,
+                result.getContent().get(0).getType()
+        );
 
         verify(transactionRepository)
-                .findByAccountIdOrderByTransactionTimeDesc(1L);
+                .findByAccountIdOrderByTransactionTimeDesc(
+                        eq(1L),
+                        any(Pageable.class)
+                );
     }
 }
