@@ -103,5 +103,16 @@ public class AccountController
 
         return ResponseEntity.ok(transactions);
     }
+    @PutMapping("/{id}/loan-repayment")
+    public ResponseEntity<AccountDto> deductLoanRepayment(
+            @PathVariable Long id,
+            @RequestBody Map<String, Double> request) {
+
+        double amount = request.get("amount");
+
+        AccountDto updatedAccount = accountService.deductLoanRepayment(id, amount);
+
+        return ResponseEntity.ok(updatedAccount);
+    }
 
 }
