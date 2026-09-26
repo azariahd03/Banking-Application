@@ -22,4 +22,13 @@ public class AccountDto
     @PositiveOrZero(message = "Balance cannot be negative")
     private double balance;
 
+    private String mobile;
+
+    private String pan;
+
+    public AccountDto(long id, String accountHolderName, double balance) {
+        this.id = id;
+        this.accountHolderName = accountHolderName;
+        this.balance = balance;
+    }
 }

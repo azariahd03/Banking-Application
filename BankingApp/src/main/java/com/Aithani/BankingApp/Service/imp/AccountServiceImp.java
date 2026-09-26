@@ -16,9 +16,12 @@ import com.Aithani.BankingApp.Entity.Transaction;
 import com.Aithani.BankingApp.Entity.TransactionType;
 
 import java.time.LocalDateTime;
+
+import com.Aithani.BankingApp.Util.DataMaskingUtil;
 import dto.AccountDto;
 import dto.TransactionDto;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +32,7 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import com.Aithani.BankingApp.Repository.LoanRepository;
 import org.springframework.transaction.annotation.Transactional;
-
+@Slf4j
 @Service
 public class AccountServiceImp implements AccountService
 {
@@ -49,6 +52,12 @@ public class AccountServiceImp implements AccountService
     public AccountDto createAccount(AccountDto accountDto) {
         Account account = AccountMapper.mapToAccount(accountDto);
         Account savedAccount = accountRepository.save(account);
+        log.info(
+                "Account created. id={}, mobile={}, pan={}",
+                savedAccount.getId(),
+                DataMaskingUtil.maskMobile(savedAccount.getMobile()),
+                DataMaskingUtil.maskPan(savedAccount.getPan())
+        );
         return AccountMapper.mapToAccountDto(savedAccount);
     }
 
@@ -272,5 +281,40 @@ double balance = account.getBalance();
                         transaction.getTransactionTime()
                 )
         );
+    }
+
+    @Override
+    @Transactional
+    public AccountDto deductLoanRepayment(Long id, double amount) {
+
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account doesn't exist"));
+
+        if (amount <= 0) {
+            throw new InvalidLoanAmountException(
+                    "Repayment amount must be greater than zero"
+            );
+        }
+
+        if (account.getBalance() < amount) {
+            throw new InsufficientBalanceException(
+                    "Insufficient balance for loan repayment"
+            );
+        }
+
+        account.setBalance(account.getBalance() - amount);
+
+        Account savedAccount = accountRepository.save(account);
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(amount);
+        transaction.setType(TransactionType.LOAN_REPAYMENT);
+        transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setAccount(savedAccount);
+
+        transactionRepository.save(transaction);
+
+        return AccountMapper.mapToAccountDto(savedAccount);
     }
 }

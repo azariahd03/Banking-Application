@@ -21,4 +21,10 @@ public class Account
     @Column(name = "account_holder_name")
     private String accountHolderName;
     private  double balance;
+
+    @Column(name = "mobile")
+    private String mobile;
+
+    @Column(name = "pan")
+    private String pan;
 }

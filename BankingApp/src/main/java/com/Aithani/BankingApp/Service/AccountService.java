@@ -31,4 +31,6 @@ public interface AccountService
             int page,
             int size
     );
+
+    AccountDto deductLoanRepayment(Long id, double amount);
 }
