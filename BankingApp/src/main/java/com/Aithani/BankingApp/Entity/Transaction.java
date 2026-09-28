@@ -10,7 +10,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name ="transactions")
+@Table(name ="transactions",
+        indexes = {
+                @Index(name = "idx_transactions_account_time",
+                        columnList = "account_id, transaction_time")
+        }
+        )
+
 public class Transaction {
 
     @Id
@@ -21,6 +27,7 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
+    @Column(name = "transaction_time")
     private LocalDateTime transactionTime;
 
     @ManyToOne
