@@ -223,18 +223,36 @@ public class AccountServiceImpTest {
         account.setAccountHolderName("Test User");
         account.setBalance(5000);
 
-        Transaction transaction = new Transaction();
-        transaction.setId(1L);
-        transaction.setAmount(1000);
-        transaction.setType(TransactionType.DEPOSIT);
-        transaction.setTransactionTime(LocalDateTime.now());
-        transaction.setAccount(account);
+        LocalDateTime now = LocalDateTime.now();
+
+        Transaction newest = new Transaction();
+        newest.setId(3L);
+        newest.setAmount(500);
+        newest.setType(TransactionType.DEPOSIT);
+        newest.setTransactionTime(now);
+        newest.setAccount(account);
+
+        Transaction middle = new Transaction();
+        middle.setId(2L);
+        middle.setAmount(1000);
+        middle.setType(TransactionType.LOAN_REPAYMENT);
+        middle.setTransactionTime(now.minusHours(1));
+        middle.setAccount(account);
+
+        Transaction oldest = new Transaction();
+        oldest.setId(1L);
+        oldest.setAmount(200);
+        oldest.setType(TransactionType.WITHDRAW);
+        oldest.setTransactionTime(now.minusHours(2));
+        oldest.setAccount(account);
 
         when(accountRepository.findById(1L))
                 .thenReturn(Optional.of(account));
 
         Page<Transaction> transactionPage =
-                new PageImpl<>(List.of(transaction));
+                new PageImpl<>(
+                        List.of(newest, middle, oldest)
+                );
 
         when(transactionRepository
                 .findByAccountIdOrderByTransactionTimeDesc(
@@ -246,16 +264,21 @@ public class AccountServiceImpTest {
         Page<TransactionDto> result =
                 accountService.getTransactionHistory(1L, 0, 10);
 
-        assertEquals(1, result.getContent().size());
+        assertEquals(3, result.getContent().size());
 
         assertEquals(
-                1000,
-                result.getContent().get(0).getAmount()
+                3L,
+                result.getContent().get(0).getId()
         );
 
         assertEquals(
-                TransactionType.DEPOSIT,
-                result.getContent().get(0).getType()
+                2L,
+                result.getContent().get(1).getId()
+        );
+
+        assertEquals(
+                1L,
+                result.getContent().get(2).getId()
         );
 
         verify(transactionRepository)
