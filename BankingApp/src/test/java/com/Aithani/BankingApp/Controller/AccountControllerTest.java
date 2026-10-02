@@ -143,7 +143,8 @@ public class AccountControllerTest {
                         1L,
                         1000,
                         TransactionType.DEPOSIT,
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        "TXN-TEST-001"
                 );
 
         Page<TransactionDto> page =

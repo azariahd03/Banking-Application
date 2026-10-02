@@ -15,4 +15,5 @@ public class TransactionDto {
     private double amount;
     private TransactionType type;
     private LocalDateTime transactionTime;
+    private String referenceNumber;
 }

@@ -25,9 +25,14 @@ public class Transaction {
     @Column(name = "transaction_time")
     private LocalDateTime transactionTime;
 
+    @Column(name = "reference_number")
+    private String referenceNumber;
+
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account account;
+
+
 
 
 }
