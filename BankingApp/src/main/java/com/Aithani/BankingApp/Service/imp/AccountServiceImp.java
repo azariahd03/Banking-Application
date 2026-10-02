@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import com.Aithani.BankingApp.Repository.LoanRepository;
@@ -85,6 +86,7 @@ public class AccountServiceImp implements AccountService
         transaction.setAmount(amount);
         transaction.setType(TransactionType.DEPOSIT);
         transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setReferenceNumber("TXN-" + UUID.randomUUID());
         transaction.setAccount(savedAccount);
 
         transactionRepository.save(transaction);
@@ -111,6 +113,7 @@ public class AccountServiceImp implements AccountService
         transaction.setAmount(amount);
         transaction.setType(TransactionType.WITHDRAW);
         transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setReferenceNumber("TXN-" + UUID.randomUUID());
         transaction.setAccount(savedAccount);
 
         transactionRepository.save(transaction);
@@ -213,6 +216,7 @@ double balance = account.getBalance();
         transaction.setAmount(amount);
         transaction.setType(TransactionType.LOAN_CREDIT);
         transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setReferenceNumber("TXN-" + UUID.randomUUID());
         transaction.setAccount(savedAccount);
 
         transactionRepository.save(transaction);
@@ -247,6 +251,7 @@ double balance = account.getBalance();
         transaction.setAmount(loanAmount);
         transaction.setType(TransactionType.LOAN_REPAYMENT);
         transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setReferenceNumber("TXN-" + UUID.randomUUID());
         transaction.setAccount(account);
 
         transactionRepository.save(transaction);
@@ -278,7 +283,8 @@ double balance = account.getBalance();
                         transaction.getId(),
                         transaction.getAmount(),
                         transaction.getType(),
-                        transaction.getTransactionTime()
+                        transaction.getTransactionTime(),
+                        transaction.getReferenceNumber()
                 )
         );
     }
@@ -311,6 +317,7 @@ double balance = account.getBalance();
         transaction.setAmount(amount);
         transaction.setType(TransactionType.LOAN_REPAYMENT);
         transaction.setTransactionTime(LocalDateTime.now());
+        transaction.setReferenceNumber("TXN-" + UUID.randomUUID());
         transaction.setAccount(savedAccount);
 
         transactionRepository.save(transaction);
